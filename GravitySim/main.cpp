@@ -4,7 +4,6 @@
 #include "simmgr.h"
 #include <iostream>
 
-const double PI = 3.14159265;
 int particle::next_available_id = 0;
 
 int main(int argc, char* argv[])

@@ -11,6 +11,8 @@
 
 using namespace std;
 
+const double PI = 3.14159265;
+
 class simmgr
 {
 private:
@@ -28,6 +30,7 @@ private:
     void execute_timestep(particle* p);
     void print();
     double getDistanceBetweenPoints(int x1, int x2, int y1, int y2);
+    double getAngleBetweenPoints(int x1, int x2, int y1, int y2);
 
 public:
     // Constructors

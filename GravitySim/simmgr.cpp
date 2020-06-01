@@ -103,6 +103,7 @@ void simmgr::processinput()
     SDL_Event evnt;
     bool priorDownEvent = false;
     double d = 0;
+    double a = 0;
 
     while (SDL_PollEvent(&evnt))
     {
@@ -112,15 +113,16 @@ void simmgr::processinput()
             _simstate = sim_state::run;
             break;
         case (SDL_MOUSEBUTTONDOWN):
-            std::cout << "Particle location marked: " << evnt.button.x << "," << evnt.button.y << "\n";
+            std::cout << "Particle marked: " << evnt.button.x << "," << evnt.button.y << "\n";
             _xdown = evnt.button.x;
             _ydown = evnt.button.y;
             priorDownEvent = true;
             break;
         case (SDL_MOUSEBUTTONUP):
-            d = getDistanceBetweenPoints(_xdown, evnt.button.x, _ydown, evnt.button.y);
-            std::cout << "Particle velocity end marked: " << evnt.button.x << "," << evnt.button.y 
-                        << " Distance: " << d << " Velocity: " << (int)d/(int)10 << "\n";
+            d = getDistanceBetweenPoints(evnt.button.x, _xdown, evnt.button.y, _ydown);
+            a = getAngleBetweenPoints(_xdown, evnt.button.x, _ydown, evnt.button.y) * 180.0 / PI;
+            std::cout << "Particle end marked: " << evnt.button.x << "," << evnt.button.y 
+                        << " Distance: " << d << " Velocity: " << (int)d/(int)10 << " Angle: " << a << "\n";
             // clear downEvent and locals
             priorDownEvent = false;
             _xdown = 0;
@@ -201,4 +203,9 @@ double simmgr::getDistanceBetweenPoints(int x1, int x2, int y1, int y2)
     int dx = x2 - x1;
     int dy = y2 - y1;
     return sqrt(pow(dx, 2) + pow(dy, 2));
+}
+
+double simmgr::getAngleBetweenPoints(int x1, int x2, int y1, int y2)
+{
+    return atan2(y2 - y1, x2 - x1);
 }
