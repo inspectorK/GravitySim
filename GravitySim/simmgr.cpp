@@ -9,7 +9,7 @@ simmgr is the top level class that manages the nbody simulation
 #include <iomanip>
 #include <cmath>
 
-#define DEFAULT_TIMESTEPS 100
+#define DEFAULT_TIMESTEPS 1000
 
 // SDL Window Default Options
 const int WindowSizeX = 1024;
@@ -47,7 +47,6 @@ int simmgr::sim_init(vector<particle> particles)
 {
     // build vector of particles
     _particles = particles;
-    _numparticles = _particles.size();
 
     // initialize SDL
     int status = 0;
@@ -121,6 +120,7 @@ void simmgr::processinput()
     // locals
     SDL_Event evnt;
     bool priorDownEvent = false;
+    particle p = particle();
     double d = 0;
     double a = 0;
 
@@ -135,9 +135,13 @@ void simmgr::processinput()
             std::cout << "Particle marked: " << evnt.button.x << "," << evnt.button.y << "\n";
             _xdown = evnt.button.x;
             _ydown = evnt.button.y;
-            drawParticle(evnt.button.x, evnt.button.y);
+            drawParticle(vect(_xdown, _ydown));
             break;
         case (SDL_MOUSEBUTTONUP):
+            p.set_mass(200);
+            p.set_position(_xdown, _ydown);
+            p.set_velocity(evnt.button.x, _xdown, evnt.button.y, _ydown);
+            _particles.push_back(p);
             d = getDistanceBetweenPoints(evnt.button.x, _xdown, evnt.button.y, _ydown);
             a = getAngleBetweenPoints(_xdown, evnt.button.x, _ydown, evnt.button.y) * 180.0 / PI;
             std::cout << "Particle end marked: " << evnt.button.x << "," << evnt.button.y 
@@ -153,11 +157,11 @@ void simmgr::processinput()
     }
 }
 
-void simmgr::drawParticle(int x, int y)
+void simmgr::drawParticle(vect pos)
 {
     SDL_Rect particle;
-    particle.x = x;
-    particle.y = y;
+    particle.x = pos.get_x();
+    particle.y = pos.get_y();
     particle.h = 8;
     particle.w = 8;
 
@@ -249,6 +253,8 @@ void simmgr::run()
     _simstate = sim_state::createobjects;
 
     createobjects();
+    _numparticles = _particles.size();
+    _simstate = sim_state::run;
 
     // print intial condition
     print();
@@ -267,6 +273,17 @@ void simmgr::run()
         {
             _particles[iter].update_pos();
         }
+
+        // for each particle render the object to the screen
+        for (int iter = 0; iter < _numparticles; iter++)
+        {
+            // set window color to black
+            int stat = SDL_SetRenderDrawColor(_renderer, 0x0, 0x0, 0x0, 0xff);
+            stat = SDL_RenderClear(_renderer);
+            drawParticle(_particles[iter].get_position());
+            SDL_RenderPresent(_renderer);
+        }
+
         print();
     }
 }

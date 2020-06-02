@@ -25,6 +25,16 @@ void vect::print() const
 
 #pragma region Getters
 
+double vect::get_x()
+{
+    return _x;
+}
+
+double vect::get_y()
+{
+    return _y;
+}
+
 double vect::get_magnitude() const
 {
     // Returns the magnitude of vector via pythagorean theorem

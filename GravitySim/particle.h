@@ -27,6 +27,8 @@ public:
 
     // Setters
     void set_mass(double m);
+    void set_position(double x, double y);
+    void set_velocity(double x1, double x2, double y1, double y2);
 
     // Simulation Methods
     void update_pos();

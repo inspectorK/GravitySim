@@ -14,6 +14,8 @@ public:
     void print() const;
 
     // Getters
+    double get_x();
+    double get_y();
     double get_magnitude() const;
     double get_angle() const;
     vect get_unitvector() const;

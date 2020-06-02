@@ -62,6 +62,20 @@ void particle::set_mass(double m)
     _mass = m;
 }
 
+void particle::set_position(double x, double y)
+{
+    vect temp = vect(x, y);
+    this->_pos = temp;
+}
+
+void particle::set_velocity(double x1, double x2, double y1, double y2)
+{
+    vect temp = vect();
+    temp.setx(x2 - x1);
+    temp.sety(y2 - y1);
+    this->_vel = temp;
+}
+
 void particle::update_pos()
 {
     this->_pos = this->_vel + this->_pos;

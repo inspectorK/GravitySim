@@ -50,7 +50,7 @@ public:
     int sdl_rendererinit();
     void createobjects();
     void processinput();
-    void drawParticle(int x, int y);
+    void drawParticle(vect pos);
     void run();
 
 };
