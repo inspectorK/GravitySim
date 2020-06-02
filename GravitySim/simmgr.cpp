@@ -12,8 +12,8 @@ simmgr is the top level class that manages the nbody simulation
 #define DEFAULT_TIMESTEPS 100
 
 // SDL Window Default Options
-const int WindowSizeX = 640;
-const int WindowSizeY = 480;
+const int WindowSizeX = 1024;
+const int WindowSizeY = 1024;
 const int SDLWindowOptions = SDL_WINDOW_SHOWN 
                            | SDL_WINDOW_RESIZABLE 
                            | SDL_WINDOW_OPENGL;
@@ -25,6 +25,7 @@ simmgr::simmgr()
     _numparticles = 0;
     _numsteps = DEFAULT_TIMESTEPS;
     _window = nullptr;
+    _renderer = nullptr;
     _simstate = sim_state::initialize;
     _xdown = 0;
     _ydown = 0;
@@ -36,6 +37,7 @@ simmgr::simmgr(int numsteps)
     _numparticles = 0;
     _numsteps = numsteps;
     _window = nullptr;
+    _renderer = nullptr;
     _simstate = sim_state::initialize;
     _xdown = 0;
     _ydown = 0;
@@ -60,21 +62,27 @@ int simmgr::sim_init(vector<particle> particles)
 
 void simmgr::sdl_printerrorifbad(int status)
 {
-    if (status)
-    {
-        std::cout << "Error [" << status << "] " << SDL_GetError();
-    }
+
 }
 
 int simmgr::sdl_init()
 {
     // init SDL
     int status = SDL_Init(SDL_INIT_EVERYTHING);
-    sdl_printerrorifbad(status);
+    if (status) { return 1; }
 
     // init Window
     status = sdl_windowinit();
-    sdl_printerrorifbad(status);
+    if (status) { return 1; }
+
+    // init Renderer
+    status = sdl_rendererinit();
+    if (status) { return 1; }
+
+    // set window color to black
+    int stat = SDL_SetRenderDrawColor(_renderer, 0x0, 0x0, 0x0, 0xff);
+    stat = SDL_RenderClear(_renderer);
+    SDL_RenderPresent(_renderer);
     return 0;
 }
 
@@ -83,7 +91,18 @@ int simmgr::sdl_windowinit()
     _window = SDL_CreateWindow("GravitySim", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WindowSizeX, WindowSizeY, SDLWindowOptions);
     if (!_window)
     {
-        cout << "Error creating window.\n";
+        cout << "Error creating SDL_Window: " << SDL_GetError() << "\n";
+        return 1;
+    }
+    return 0;
+}
+
+int simmgr::sdl_rendererinit()
+{
+    _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (!_renderer)
+    {
+        cout << "Error creating SDL_Renderer: " << SDL_GetError() << "\n";
         return 1;
     }
     return 0;
@@ -116,15 +135,14 @@ void simmgr::processinput()
             std::cout << "Particle marked: " << evnt.button.x << "," << evnt.button.y << "\n";
             _xdown = evnt.button.x;
             _ydown = evnt.button.y;
-            priorDownEvent = true;
+            drawParticle(evnt.button.x, evnt.button.y);
             break;
         case (SDL_MOUSEBUTTONUP):
             d = getDistanceBetweenPoints(evnt.button.x, _xdown, evnt.button.y, _ydown);
             a = getAngleBetweenPoints(_xdown, evnt.button.x, _ydown, evnt.button.y) * 180.0 / PI;
             std::cout << "Particle end marked: " << evnt.button.x << "," << evnt.button.y 
                         << " Distance: " << d << " Velocity: " << (int)d/(int)10 << " Angle: " << a << "\n";
-            // clear downEvent and locals
-            priorDownEvent = false;
+            // clear locals
             _xdown = 0;
             _ydown = 0;
             break;
@@ -133,6 +151,90 @@ void simmgr::processinput()
             continue;
         }
     }
+}
+
+void simmgr::drawParticle(int x, int y)
+{
+    SDL_Rect particle;
+    particle.x = x;
+    particle.y = y;
+    particle.h = 8;
+    particle.w = 8;
+
+    SDL_SetRenderDrawColor(_renderer, 0xff, 0xff, 0xff, 0xff);
+    SDL_RenderFillRect(_renderer, &particle);
+    SDL_RenderPresent(_renderer);
+    
+//    /* Create a 32-bit surface with the bytes of each pixel in R,G,B,A order,
+//   as expected by OpenGL for textures */
+//    SDL_Surface* tempSurface = nullptr;
+//    SDL_Texture* texture = nullptr;
+//    Uint32 rmask, gmask, bmask, amask;
+//
+//    /* SDL interprets each pixel as a 32-bit number, so our masks must depend
+//       on the endianness (byte order) of the machine */
+//#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+//    rmask = 0xff000000;
+//    gmask = 0x00ff0000;
+//    bmask = 0x0000ff00;
+//    amask = 0x000000ff;
+//    Uint32 pixelColor = 0;
+//#else
+//    rmask = 0x000000ff;
+//    gmask = 0x0000ff00;
+//    bmask = 0x00ff0000;
+//    amask = 0xff000000;
+//    Uint32 pixelColor = 0xff000000;
+//#endif
+//    if (!_renderer)
+//    {
+//        _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+//        if (!_renderer)
+//        {
+//            std::cout << "Error in SDL_CreateRenderer: " << SDL_GetError() << "\n";
+//        }
+//    }
+//    tempSurface = SDL_CreateRGBSurface(0, 8, 8, 32, rmask, gmask, bmask, amask);
+//    if (!tempSurface)
+//    {
+//        std::cout << "Error in SDL_CreateRGBSurface: " << SDL_GetError() << "\n";
+//    }
+//    texture = SDL_CreateTextureFromSurface(_renderer, tempSurface);
+//    if (!texture)
+//    {
+//        std::cout << "Error in SDL_CreateTextureFromSurface: " << SDL_GetError() << "\n";
+//    }
+//    SDL_FreeSurface(tempSurface);
+//
+//    // allocate pixel buffer
+//    Uint32* tempPixels = new Uint32[8 * 8];
+//
+//    // 0 init pixel buffer (0 will be black)
+//    memset(tempPixels, 0, 8 * 8 * sizeof(Uint32));
+//
+//    // set pixel buffer with color
+//    for (int iter = 0; iter < 8 * 8; iter++)
+//    {
+//        tempPixels[iter] = pixelColor;
+//    }
+//
+//    // update texture with pixel buffer
+//    SDL_UpdateTexture(texture, NULL, tempPixels, 8 * sizeof(Uint32));
+//
+//    delete[] tempPixels;
+//    SDL_Rect srcRect;
+//    srcRect.x = 0;
+//    srcRect.y = 0;
+//    srcRect.w = 8;
+//    srcRect.h = 8;
+//
+//    SDL_Rect dstRect;
+//    dstRect.x = x;
+//    dstRect.y = y;
+//    dstRect.w = 8;
+//    dstRect.h = 8;
+//
+//    SDL_RenderCopy(_renderer, texture, &srcRect, &dstRect);
 }
 
 void simmgr::run()

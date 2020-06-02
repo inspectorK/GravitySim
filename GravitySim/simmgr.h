@@ -16,8 +16,11 @@ const double PI = 3.14159265;
 class simmgr
 {
 private:
-    // Members
+    // SDL Members
     SDL_Window* _window;
+    SDL_Renderer* _renderer;
+
+    // Sim Members
     vector<particle> _particles;
     int _numparticles;
     int _numsteps;
@@ -44,8 +47,10 @@ public:
     void sdl_printerrorifbad(int status);
     int sdl_init();
     int sdl_windowinit();
+    int sdl_rendererinit();
     void createobjects();
     void processinput();
+    void drawParticle(int x, int y);
     void run();
 
 };
