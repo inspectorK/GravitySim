@@ -1,3 +1,9 @@
+/*
+
+simmgr is the top level class that manages the nbody simulation
+
+*/
+
 #pragma once
 #include <Windows.h>
 #include <vector>
@@ -6,7 +12,6 @@
 
 #include "vect.h"
 #include "particle.h"
-#include "status.h"
 
 #include <include/SDL/SDL.h>
 #include <include/GL/glew.h>
@@ -15,27 +20,51 @@ using namespace std;
 
 const double PI = 3.14159265;
 
+enum class sim_state
+{
+    initialize = 0,
+    createobjects = 1,
+    run = 2
+};
+
 class simmgr
 {
 private:
-    // SDL Members
-    SDL_Window* _window;
-    SDL_Renderer* _renderer;
+    // SDL Graphics Members
+    SDL_Window* _window;                               // SDL window for simulation presentation
+    SDL_Renderer* _renderer;                           // SDL renderer for various objects
 
     // Sim Members
-    vector<particle> _particles;
-    int _numparticles;
-    int _numsteps;
-    sim_state _simstate;
+    vector<particle> _particles;                       // internal "array" (vector is poor word choice) of particles involved in sim
+    int _numparticles;                                 // number of particles within _particles
+    int _numsteps;                                     // number of timesteps to execute
+    sim_state _simstate;                               // internal simulation state
 
-    int _xdown; // x coordinate of up click
-    int _ydown; // y coordinate of down click 
+    // for user creating particles
+    int _xdown;
+    int _ydown;
 
-    // Functions
-    void execute_timestep(particle* p);
+    // Simulation Functions
     void print(int step);
-    double getDistanceBetweenPoints(int x1, int x2, int y1, int y2);
-    double getAngleBetweenPoints(int x1, int x2, int y1, int y2);
+    void execute_timestep(particle* p);
+    double getDistanceBetweenPoints(int x1, int x2, int y1, int y2);        // TODO do we really need these?
+    double getAngleBetweenPoints(int x1, int x2, int y1, int y2);           // TODO do we really need these?
+
+    // Graphics Functions
+    void sdl_printerrorifbad(int status);
+    int sdl_init();                                     // initialize SDL library                        
+    int sdl_windowinit();                               // initialize SDL window
+    int sdl_rendererinit();                             // initialize SDL renderer
+    vect sdl_getwindowcenter();                         // get center coordinates of SDL window
+
+    void createobjects();                               // handles user creation of particles
+    void processinput();                                // handles SDL events/input for creating particles
+    
+    // TODO: Currently need two drawParticle methods.  Particle is "created" currently on down click,
+    //       but the object is not created until the upclick.  Need to handle this better
+    void drawParticle(vect pos, int size);
+    void drawParticle(particle p);
+    void drawParticles(particle* particles);
 
 public:
     // Constructors
@@ -44,21 +73,6 @@ public:
 
     // Functions
     int sim_init(vector<particle> particles);
-
-    // SDL related functions and handlers
-    void sdl_printerrorifbad(int status);
-    int sdl_init();
-    int sdl_windowinit();
-    int sdl_rendererinit();
-    vect sdl_getwindowcenter();
-    void createobjects();
-    void processinput();
-    void drawParticle(vect pos, int size);
-    void drawParticle(particle p);
-    void drawParticles(particle* particles);
-    
-
-    // Main run function
     void run(bool sun);
 
 };

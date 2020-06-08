@@ -44,8 +44,5 @@
     <ClInclude Include="particle_unittest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="status.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

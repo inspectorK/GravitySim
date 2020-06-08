@@ -19,7 +19,7 @@ void run_particleUnitTest()
     std::cout << "\n";
     for (int iter = 0; iter < 100; iter++)
     {
-        planet.apply_g(moon);
+        planet.update_vel(moon);
         planet.update_pos();
         planet.get_position().print();
         std::cout << "\n";

@@ -151,7 +151,6 @@
     <ClInclude Include="particle.h" />
     <ClInclude Include="particle_unittest.h" />
     <ClInclude Include="simmgr.h" />
-    <ClInclude Include="status.h" />
     <ClInclude Include="vect.h" />
     <ClInclude Include="vect_unittest.h" />
   </ItemGroup>

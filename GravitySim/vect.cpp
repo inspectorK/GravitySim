@@ -25,12 +25,12 @@ void vect::print() const
 
 #pragma region Getters
 
-double vect::get_x()
+double vect::get_x() const
 {
     return _x;
 }
 
-double vect::get_y()
+double vect::get_y() const
 {
     return _y;
 }

@@ -1,6 +1,7 @@
 /*
 
-simmgr is the top level class that manages the nbody simulation
+particle represents a single particle involved in the nbody simulation.  Every particle in the simulation
+will influence every other particle.
 
 */
 
@@ -23,13 +24,14 @@ const int SDLWindowOptions = SDL_WINDOW_SHOWN
 
 simmgr::simmgr()
 {
-    // just default to 100 steps
     _particles = vector<particle>();
     _numparticles = 0;
     _numsteps = DEFAULT_TIMESTEPS;
     _window = nullptr;
     _renderer = nullptr;
     _simstate = sim_state::initialize;
+
+    // for user creating particles
     _xdown = 0;
     _ydown = 0;
 }
@@ -42,6 +44,8 @@ simmgr::simmgr(int numsteps)
     _window = nullptr;
     _renderer = nullptr;
     _simstate = sim_state::initialize;
+
+    // for user creating particles
     _xdown = 0;
     _ydown = 0;
 }
@@ -150,7 +154,7 @@ void simmgr::processinput()
             break;
         case (SDL_MOUSEBUTTONUP):
             p.set_mass(20);
-            p.set_rendersize(DefaultParticleSize);
+            p.set_size(DefaultParticleSize);
             p.set_position(_xdown, _ydown);
             p.set_velocity(evnt.button.x / 10, _xdown / 10, evnt.button.y / 10, _ydown /10);
             _particles.push_back(p);
@@ -169,6 +173,10 @@ void simmgr::processinput()
     }
 }
 
+// Function: DrawParticle(vect, size)
+// 
+// Draws particle given a position vector and size.  Need this to render the particle
+// on the down click.  Particle object not actually created until upclick
 void simmgr::drawParticle(vect pos, int size)
 {
     SDL_Rect particle;
@@ -185,80 +193,12 @@ void simmgr::drawParticle(vect pos, int size)
         // only rerender here if we were initializing or user is drawing particles
         SDL_RenderPresent(_renderer);
     }
-
-    
-//    /* Create a 32-bit surface with the bytes of each pixel in R,G,B,A order,
-//   as expected by OpenGL for textures */
-//    SDL_Surface* tempSurface = nullptr;
-//    SDL_Texture* texture = nullptr;
-//    Uint32 rmask, gmask, bmask, amask;
-//
-//    /* SDL interprets each pixel as a 32-bit number, so our masks must depend
-//       on the endianness (byte order) of the machine */
-//#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-//    rmask = 0xff000000;
-//    gmask = 0x00ff0000;
-//    bmask = 0x0000ff00;
-//    amask = 0x000000ff;
-//    Uint32 pixelColor = 0;
-//#else
-//    rmask = 0x000000ff;
-//    gmask = 0x0000ff00;
-//    bmask = 0x00ff0000;
-//    amask = 0xff000000;
-//    Uint32 pixelColor = 0xff000000;
-//#endif
-//    if (!_renderer)
-//    {
-//        _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-//        if (!_renderer)
-//        {
-//            std::cout << "Error in SDL_CreateRenderer: " << SDL_GetError() << "\n";
-//        }
-//    }
-//    tempSurface = SDL_CreateRGBSurface(0, 8, 8, 32, rmask, gmask, bmask, amask);
-//    if (!tempSurface)
-//    {
-//        std::cout << "Error in SDL_CreateRGBSurface: " << SDL_GetError() << "\n";
-//    }
-//    texture = SDL_CreateTextureFromSurface(_renderer, tempSurface);
-//    if (!texture)
-//    {
-//        std::cout << "Error in SDL_CreateTextureFromSurface: " << SDL_GetError() << "\n";
-//    }
-//    SDL_FreeSurface(tempSurface);
-//
-//    // allocate pixel buffer
-//    Uint32* tempPixels = new Uint32[8 * 8];
-//
-//    // 0 init pixel buffer (0 will be black)
-//    memset(tempPixels, 0, 8 * 8 * sizeof(Uint32));
-//
-//    // set pixel buffer with color
-//    for (int iter = 0; iter < 8 * 8; iter++)
-//    {
-//        tempPixels[iter] = pixelColor;
-//    }
-//
-//    // update texture with pixel buffer
-//    SDL_UpdateTexture(texture, NULL, tempPixels, 8 * sizeof(Uint32));
-//
-//    delete[] tempPixels;
-//    SDL_Rect srcRect;
-//    srcRect.x = 0;
-//    srcRect.y = 0;
-//    srcRect.w = 8;
-//    srcRect.h = 8;
-//
-//    SDL_Rect dstRect;
-//    dstRect.x = x;
-//    dstRect.y = y;
-//    dstRect.w = 8;
-//    dstRect.h = 8;
-//
-//    SDL_RenderCopy(_renderer, texture, &srcRect, &dstRect);
 }
 
+// Function: DrawParticle(particle)
+//
+// Draws the particle given a particle with the color defined in the object.  This should
+// be the only method for drawing particles
 void simmgr::drawParticle(particle p)
 {
     SDL_Rect particle;
@@ -283,7 +223,7 @@ void simmgr::drawParticle(particle p)
 
 void simmgr::drawParticles(particle* particles)
 {
-
+    // TODO possible performance improvement with only a single render call to SDL render API?
 }
 
 void simmgr::run(bool sun)
@@ -294,13 +234,14 @@ void simmgr::run(bool sun)
         return;
     }
 
+    // TODO this is ugly, do better
     if (sun)
     {
         // create massive particle at center of screen
         vect center = sdl_getwindowcenter();
         drawParticle(center, SunSize);
         particle sun = particle(SunMass, sdl_getwindowcenter(), vect(0, 0));
-        sun.set_rendersize(SunSize);
+        sun.set_size(SunSize);
         _particles.push_back(sun);
     }
 
@@ -326,6 +267,7 @@ void simmgr::run(bool sun)
         // for each particle update positions
         for (int iter = 0; iter < _numparticles; iter++)
         {
+            // since execute_timestep() nets all forces into the _vel vector, only need to update _pos once per particle
             _particles[iter].update_pos();
         }
 
@@ -338,6 +280,7 @@ void simmgr::run(bool sun)
             drawParticle(_particles[iter]);
         }
 
+        // publish backbuffer to window
         SDL_RenderPresent(_renderer);
 
         print(step);
@@ -353,7 +296,7 @@ void simmgr::execute_timestep(particle *p)
         if (p->get_id() == _particles[iter].get_id())
             continue;
 
-        p->apply_g(_particles[iter]);
+        p->update_vel(_particles[iter]);
     }
     // wait until all forces are accounted for before calling update_pos()
     // p->update_pos();

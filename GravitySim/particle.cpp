@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+#pragma region Constructors
 
 particle::particle()
 {
@@ -40,6 +41,10 @@ particle::particle(double m, vect pos, vect vel)
     _id = next_available_id++;
 }
 
+#pragma endregion
+
+#pragma region Getters
+
 int particle::get_id() const
 {
     return this->_id;
@@ -47,7 +52,7 @@ int particle::get_id() const
 
 int particle::get_rendersize() const
 {
-    return _rendersize;
+    return _size;
 }
 
 double particle::get_mass() const
@@ -55,56 +60,60 @@ double particle::get_mass() const
     return _mass;
 }
 
-double particle::get_distaceTo(particle other)
+double particle::get_distaceTo(particle other) const
 {
     double dx = other._pos._x - this->_pos._x;
     double dy = other._pos._y - this->_pos._y;
     return sqrt(pow(dx, 2) + pow(dy, 2));
 }
 
-double particle::get_angleTo(particle other)
+double particle::get_angleTo(particle other) const
 {
     return atan2(other._pos._y - this->_pos._y, other._pos._x - this->_pos._x);
 }
 
-vect particle::get_position()
+vect particle::get_position() const
 {
     return _pos;
 }
 
-vect particle::get_velocity()
+vect particle::get_velocity() const
 {
     return _vel;
 }
 
-Uint8 particle::get_r()
+Uint8 particle::get_r() const
 {
     return _r;
 }
 
-Uint8 particle::get_g()
+Uint8 particle::get_g() const
 {
     return _g;
 }
 
-Uint8 particle::get_b()
+Uint8 particle::get_b() const
 {
     return _b;
 }
 
-Uint8 particle::get_a()
+Uint8 particle::get_a() const
 {
     return _a;
 }
+
+#pragma endregion
+
+#pragma region Setters
 
 void particle::set_mass(double m)
 {
     _mass = m;
 }
 
-void particle::set_rendersize(int size)
+void particle::set_size(int size)
 {
-    this->_rendersize = size;
+    this->_size = size;
 }
 
 void particle::set_position(double x, double y)
@@ -121,12 +130,16 @@ void particle::set_velocity(double x1, double x2, double y1, double y2)
     this->_vel = temp;
 }
 
+#pragma endregion
+
+#pragma region SimulationMethods
+
 void particle::update_pos()
 {
     this->_pos = this->_vel + this->_pos;
 }
 
-void particle::apply_g(particle other)
+void particle::update_vel(particle other)
 {
     this->_vel = this->_vel + calc_gTo(other);
 }
@@ -142,6 +155,15 @@ vect particle::calc_gTo(particle other)
     return g;
 }
 
+#pragma endregion
+
+#pragma region HelperMethods
+
+//  Function getRandomColor()
+//
+//  Param: bool rnd
+//  rnd = true, return random color
+//  rnd = false, return default white
 Uint8 particle::getRandomColor(bool rnd)
 {
     if (!rnd)
@@ -154,3 +176,5 @@ Uint8 particle::getRandomColor(bool rnd)
     Uint8 color = rand() % 255;
     return color;
 }
+
+#pragma endregion
