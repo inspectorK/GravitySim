@@ -1,6 +1,8 @@
 #pragma once
 #include <Windows.h>
 #include <vector>
+#include <stdlib.h>
+#include <time.h>
 
 #include "vect.h"
 #include "particle.h"
@@ -31,7 +33,7 @@ private:
 
     // Functions
     void execute_timestep(particle* p);
-    void print();
+    void print(int step);
     double getDistanceBetweenPoints(int x1, int x2, int y1, int y2);
     double getAngleBetweenPoints(int x1, int x2, int y1, int y2);
 
@@ -48,10 +50,16 @@ public:
     int sdl_init();
     int sdl_windowinit();
     int sdl_rendererinit();
+    vect sdl_getwindowcenter();
     void createobjects();
     void processinput();
-    void drawParticle(vect pos);
-    void run();
+    void drawParticle(vect pos, int size);
+    void drawParticle(particle p);
+    void drawParticles(particle* particles);
+    
+
+    // Main run function
+    void run(bool sun);
 
 };
 

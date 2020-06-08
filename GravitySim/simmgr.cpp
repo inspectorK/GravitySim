@@ -12,8 +12,11 @@ simmgr is the top level class that manages the nbody simulation
 #define DEFAULT_TIMESTEPS 1000
 
 // SDL Window Default Options
-const int WindowSizeX = 1024;
-const int WindowSizeY = 1024;
+const int SunMass = 5000;
+const int SunSize = 20;
+const int DefaultParticleSize = 6;
+const int WindowSizeX = 1200;
+const int WindowSizeY = 800;
 const int SDLWindowOptions = SDL_WINDOW_SHOWN 
                            | SDL_WINDOW_RESIZABLE 
                            | SDL_WINDOW_OPENGL;
@@ -107,6 +110,14 @@ int simmgr::sdl_rendererinit()
     return 0;
 }
 
+vect simmgr::sdl_getwindowcenter()
+{
+    int x = WindowSizeX / 2;
+    int y = WindowSizeY / 2;
+    return vect(x, y);
+    
+}
+
 void simmgr::createobjects()
 {
     while (_simstate == sim_state::createobjects)
@@ -135,12 +146,13 @@ void simmgr::processinput()
             std::cout << "Particle marked: " << evnt.button.x << "," << evnt.button.y << "\n";
             _xdown = evnt.button.x;
             _ydown = evnt.button.y;
-            drawParticle(vect(_xdown, _ydown));
+            drawParticle(vect(_xdown, _ydown), DefaultParticleSize);
             break;
         case (SDL_MOUSEBUTTONUP):
-            p.set_mass(200);
+            p.set_mass(20);
+            p.set_rendersize(DefaultParticleSize);
             p.set_position(_xdown, _ydown);
-            p.set_velocity(evnt.button.x, _xdown, evnt.button.y, _ydown);
+            p.set_velocity(evnt.button.x / 10, _xdown / 10, evnt.button.y / 10, _ydown /10);
             _particles.push_back(p);
             d = getDistanceBetweenPoints(evnt.button.x, _xdown, evnt.button.y, _ydown);
             a = getAngleBetweenPoints(_xdown, evnt.button.x, _ydown, evnt.button.y) * 180.0 / PI;
@@ -157,17 +169,23 @@ void simmgr::processinput()
     }
 }
 
-void simmgr::drawParticle(vect pos)
+void simmgr::drawParticle(vect pos, int size)
 {
     SDL_Rect particle;
-    particle.x = pos.get_x();
-    particle.y = pos.get_y();
-    particle.h = 8;
-    particle.w = 8;
+    particle.x = pos.get_x() - size/2;
+    particle.y = pos.get_y() - size/2;
+    particle.h = size;
+    particle.w = size;
 
     SDL_SetRenderDrawColor(_renderer, 0xff, 0xff, 0xff, 0xff);
     SDL_RenderFillRect(_renderer, &particle);
-    SDL_RenderPresent(_renderer);
+
+    if (_simstate == sim_state::createobjects)
+    {
+        // only rerender here if we were initializing or user is drawing particles
+        SDL_RenderPresent(_renderer);
+    }
+
     
 //    /* Create a 32-bit surface with the bytes of each pixel in R,G,B,A order,
 //   as expected by OpenGL for textures */
@@ -241,12 +259,49 @@ void simmgr::drawParticle(vect pos)
 //    SDL_RenderCopy(_renderer, texture, &srcRect, &dstRect);
 }
 
-void simmgr::run()
+void simmgr::drawParticle(particle p)
+{
+    SDL_Rect particle;
+    particle.x = p.get_position().get_x() - p.get_rendersize()/2;
+    particle.y = p.get_position().get_y() - p.get_rendersize()/2;
+    particle.h = p.get_rendersize();
+    particle.w = p.get_rendersize();
+
+    SDL_SetRenderDrawColor(_renderer,
+                           p.get_r(),
+                           p.get_g(),
+                           p.get_b(), 
+                           p.get_a());
+    SDL_RenderFillRect(_renderer, &particle);
+    if (_simstate == sim_state::createobjects)
+    {
+        // only rerender here if we were initializing or user is drawing particles
+        SDL_RenderPresent(_renderer);
+    }
+
+}
+
+void simmgr::drawParticles(particle* particles)
+{
+
+}
+
+void simmgr::run(bool sun)
 {
     if (_simstate != sim_state::initialize)
     {
         cout << "ERROR: Out of sequence call to run().  _simstate should be initialize()\n";
         return;
+    }
+
+    if (sun)
+    {
+        // create massive particle at center of screen
+        vect center = sdl_getwindowcenter();
+        drawParticle(center, SunSize);
+        particle sun = particle(SunMass, sdl_getwindowcenter(), vect(0, 0));
+        sun.set_rendersize(SunSize);
+        _particles.push_back(sun);
     }
 
     // on to next state, user will create objects to simulate
@@ -257,7 +312,7 @@ void simmgr::run()
     _simstate = sim_state::run;
 
     // print intial condition
-    print();
+    print(0);
 
     // loop for the set number of timesteps
     for (int step = 0; step < _numsteps; step++)
@@ -274,17 +329,18 @@ void simmgr::run()
             _particles[iter].update_pos();
         }
 
-        // for each particle render the object to the screen
+        // set window color to black
+        int stat = SDL_SetRenderDrawColor(_renderer, 0x0, 0x0, 0x0, 0xff);
+        stat = SDL_RenderClear(_renderer);
         for (int iter = 0; iter < _numparticles; iter++)
         {
-            // set window color to black
-            int stat = SDL_SetRenderDrawColor(_renderer, 0x0, 0x0, 0x0, 0xff);
-            stat = SDL_RenderClear(_renderer);
-            drawParticle(_particles[iter].get_position());
-            SDL_RenderPresent(_renderer);
+            // for each particle render the object to backbuffer
+            drawParticle(_particles[iter]);
         }
 
-        print();
+        SDL_RenderPresent(_renderer);
+
+        print(step);
     }
 }
 
@@ -303,10 +359,10 @@ void simmgr::execute_timestep(particle *p)
     // p->update_pos();
 }
 
-void simmgr::print()
+void simmgr::print(int step)
 {
     // print header
-    std::cout << "    mass   position" << "\n";
+    std::cout << "    mass   position  step[" << step << "]\n";
     std::cout << "    ----   --------" << "\n";
     // print status for all particles
     for (int iter = 0; iter < _numparticles; iter++)

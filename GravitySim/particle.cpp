@@ -1,5 +1,8 @@
 #include "particle.h"
 #include <cmath>
+#include <stdlib.h>
+#include <time.h>
+
 
 particle::particle()
 {
@@ -7,6 +10,12 @@ particle::particle()
     _pos = vect();
     _vel = vect();
     _id = next_available_id++;
+
+    // colors
+    _r = getRandomColor(false);
+    _g = getRandomColor(false);
+    _b = getRandomColor(false);
+    _a = 0xff;
 }
 
 particle::particle(double m, double px, double py, double vx, double vy)
@@ -15,6 +24,12 @@ particle::particle(double m, double px, double py, double vx, double vy)
     _pos = vect(px, py);
     _vel = vect(vx, vy);
     _id = next_available_id++;
+
+    // colors
+    _r = getRandomColor(false);
+    _g = getRandomColor(false);
+    _b = getRandomColor(false);
+    _a = 0xff;
 }
 
 particle::particle(double m, vect pos, vect vel)
@@ -28,6 +43,11 @@ particle::particle(double m, vect pos, vect vel)
 int particle::get_id() const
 {
     return this->_id;
+}
+
+int particle::get_rendersize() const
+{
+    return _rendersize;
 }
 
 double particle::get_mass() const
@@ -57,9 +77,34 @@ vect particle::get_velocity()
     return _vel;
 }
 
+Uint8 particle::get_r()
+{
+    return _r;
+}
+
+Uint8 particle::get_g()
+{
+    return _g;
+}
+
+Uint8 particle::get_b()
+{
+    return _b;
+}
+
+Uint8 particle::get_a()
+{
+    return _a;
+}
+
 void particle::set_mass(double m)
 {
     _mass = m;
+}
+
+void particle::set_rendersize(int size)
+{
+    this->_rendersize = size;
 }
 
 void particle::set_position(double x, double y)
@@ -95,4 +140,17 @@ vect particle::calc_gTo(particle other)
     g.set_magnitude(other.get_mass() / pow(d, 2));
     g.set_angle(this->get_angleTo(other));
     return g;
+}
+
+Uint8 particle::getRandomColor(bool rnd)
+{
+    if (!rnd)
+    {
+        // return max value for white
+        return 0xff;
+    }
+    srand(time(NULL));
+
+    Uint8 color = rand() % 255;
+    return color;
 }
